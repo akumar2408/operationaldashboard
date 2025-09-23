@@ -1,0 +1,14 @@
+name: ci
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build API
+        run: docker build -t api:ci ./api
+      - name: Build Web
+        run: docker build -t web:ci ./web

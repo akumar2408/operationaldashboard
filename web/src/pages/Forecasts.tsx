@@ -1,0 +1,1 @@
+export default function Forecasts(){ return <div>Forecasts Page</div>; }
