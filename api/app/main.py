@@ -1,9 +1,12 @@
 # api/app/main.py
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import sales_routes, forecast_routes
 
 from .config import get_settings
+from .db import engine
+from .models import Base
 from .routers import (
     auth_routes,
     tenant_routes,
@@ -11,25 +14,43 @@ from .routers import (
     sales_routes,
     forecast_routes,
     alerts_routes,
+    stats_routes,  # new stats endpoints
 )
-from .routers import stats_routes  # new stats endpoints
 
-# upgrade-pack helpers (safe to import; no-ops if you didn't add them)
+# --- Optional middlewares (fallback to no-ops if not present)
 try:
-    from app.middleware import RequestIDMiddleware
-except Exception:
+    from app.middleware import RequestIDMiddleware  # type: ignore
+except Exception:  # pragma: no cover
     class RequestIDMiddleware:  # fallback no-op
-        def __init__(self, app): pass
+        def __init__(self, app): ...
+        def __call__(self, scope, receive, send):  # type: ignore
+            return app(scope, receive, send)       # noqa: F821
+
 
 try:
-    from app.prom import MetricsASGIMiddleware, metrics
-except Exception:
+    from app.prom import MetricsASGIMiddleware, metrics  # type: ignore
+except Exception:  # pragma: no cover
     class MetricsASGIMiddleware:
-        def __init__(self, app): pass
-    def metrics(scope, receive, send): pass
+        def __init__(self, app): ...
+        def __call__(self, scope, receive, send):  # type: ignore
+            return app(scope, receive, send)       # noqa: F821
 
-# settings
+    async def metrics(scope, receive, send):  # type: ignore
+        # minimal placeholder endpoint
+        from starlette.responses import PlainTextResponse
+        resp = PlainTextResponse("metrics_unavailable\n", media_type="text/plain")
+        await resp(scope, receive, send)
+
+
 settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Create tables once at startup; safe to re-run.
+    Base.metadata.create_all(bind=engine)
+    yield
+
 
 app = FastAPI(
     title="Operational Dashboard API",
@@ -37,21 +58,20 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url=None,
     openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
 
 # ---- Middleware
 app.add_middleware(RequestIDMiddleware)
 
-cors_list = []
 if getattr(settings, "CORS_ORIGINS", None):
-    cors_list = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+    allow_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 else:
-    # fallback env from upgrade-pack; else allow local
-    cors_list = [getattr(settings, "CORS_ORIGIN", "http://localhost:5173")]
+    allow_origins = [getattr(settings, "CORS_ORIGIN", "http://localhost:5173")]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_list,
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With"],
@@ -78,4 +98,3 @@ app.include_router(sales_routes.router)
 app.include_router(forecast_routes.router)
 app.include_router(alerts_routes.router)
 app.include_router(stats_routes.router)
-
