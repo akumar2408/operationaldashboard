@@ -7,10 +7,8 @@ services:
     rootDir: api
     buildCommand: |
       pip install -U pip
-      # if you have requirements.txt in api/, this is perfect:
       if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      # if you ONLY have pyproject.toml, do:
-      if [ -f pyproject.toml ]; then pip install -e .; fi
+      # If you use pyproject.toml with poetry/pdm/etc, swap the line above accordingly.
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
@@ -18,18 +16,13 @@ services:
           name: od-postgres
           property: connectionString
       - key: CORS_ORIGIN
-        value: https://operationaldashboard.vercel.app/
+        value: https://operationaldashboard.vercel.app
       - key: PYTHONPATH
         value: .
+      # If your SQLAlchemy driver needs it, Render’s Postgres often wants SSL:
+      # - key: SQLALCHEMY_DATABASE_URI
+      #   value: ${DATABASE_URL}?sslmode=require
     autoDeploy: true
-    # run once on first deploy (creates tables)
-    postDeployCommand: |
-      python - <<'PY'
-      from app.db import engine
-      from app.models import Base
-      Base.metadata.create_all(bind=engine)
-      print("ok: tables created")
-      PY
 
 databases:
   - name: od-postgres
