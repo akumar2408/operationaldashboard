@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from ..deps import tenant_guard, db_dep
+from ..utils.deps import tenant_guard, db_dep
 from ..models import Product
 from ..schemas import ProductIn
 from fastapi import Query

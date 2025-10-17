@@ -1,22 +1,41 @@
-import { useEffect, useState } from 'react';
-import LoginForm from './components/LoginForm';
-import Dashboard from './components/Dashboard';
-import SalesUploader from './components/SalesUploader';
-import { loadToken } from './api';
-import Nav from './components/Nav';
-import { Outlet } from 'react-router-dom'
+// web/src/App.tsx
+import { useEffect, useState } from "react";
+import Dashboard from "./pages/Dashboard";
 
+export default function App() {
+  const [token, setToken] = useState(localStorage.getItem("OD_TOKEN") || "");
 
-export default function App(){
-  const [authed, setAuthed] = useState(false);
-  useEffect(()=>{ loadToken(); if(localStorage.getItem('token')) setAuthed(true); },[]);
+  useEffect(() => {
+    const t = localStorage.getItem("OD_TOKEN") || "";
+    setToken(t);
+  }, []);
 
-  if(!authed) return <LoginForm onAuthed={()=>setAuthed(true)} />;
+  function saveToken() {
+    localStorage.setItem("OD_TOKEN", token.trim());
+    location.reload();
+  }
+  function clearToken() {
+    localStorage.removeItem("OD_TOKEN");
+    setToken("");
+    location.reload();
+  }
+
   return (
-    <div>
-      <Nav />
+    <>
+      <div className="w-full bg-white/5 text-white text-xs px-3 py-2 flex items-center gap-2">
+        <span className="opacity-70">API:</span>
+        <code className="opacity-80">{import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}</code>
+        <span className="ml-4 opacity-70">Token:</span>
+        <input
+          value={token}
+          onChange={(e) => setToken(e.target.value)}
+          placeholder="Paste JWT if API requires auth"
+          className="flex-1 bg-black/30 rounded px-2 py-1 outline-none"
+        />
+        <button onClick={saveToken} className="text-xs bg-white/10 px-2 py-1 rounded">Save</button>
+        <button onClick={clearToken} className="text-xs bg-white/10 px-2 py-1 rounded">Clear</button>
+      </div>
       <Dashboard />
-      <SalesUploader />
-    </div>
+    </>
   );
 }

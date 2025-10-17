@@ -17,3 +17,31 @@ infra/.terraform/
 terraform.tfvars
 *.tfvars
 coverage/
+
+# macOS
+.DS_Store
+
+# Python (api)
+api/.venv/
+api/__pycache__/
+api/**/*.pyc
+api/.mypy_cache/
+api/.pytest_cache/
+api/.coverage
+api/local.db
+api/*.sqlite
+api/*.sqlite3
+
+# Node (web)
+web/node_modules/
+web/dist/
+web/.vite/
+web/.next/
+web/.turbo/
+
+# Env / secrets
+.env
+.env.*
+api/.env
+web/.env
+
