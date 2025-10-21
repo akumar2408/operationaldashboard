@@ -4,7 +4,7 @@ SQLAlchemy==2.0.35
 
 # DB
 psycopg[binary]==3.2.3
-alembic==1.13.2
+alembic==1.17.0
 
 # Data / ML
 pandas==2.2.3
