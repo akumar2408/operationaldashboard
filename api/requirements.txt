@@ -15,7 +15,7 @@ statsmodels==0.14.2
 # Config & uploads
 pydantic==2.9.2
 pydantic-settings==2.1.0
-python-multipart==0.0.9
+python-multipart==0.0.18
 
 # Metrics
 prometheus-client==0.20.0
