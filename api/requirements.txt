@@ -9,7 +9,7 @@ alembic==1.13.2
 # Data / ML
 pandas==2.2.3
 numpy==2.1.2
-scikit-learn==1.5.2
+scikit-learn==1.7.2
 statsmodels==0.14.2
 
 # Config & uploads
